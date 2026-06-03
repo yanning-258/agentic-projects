@@ -1,0 +1,10 @@
+fastapi # the web framework
+uvicorn[standard] #the server that runs FastAPI
+sqlalchemy #ORM layer for postgres <-> python
+psycopg2-binary #the driver SQLAlchemy uses to actually connect to Postgres
+python-dotenv #loads env variables
+openai #python client for openai LLM calls
+yfinance #
+requests
+jinja2
+python-multipart
