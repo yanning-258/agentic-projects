@@ -9,12 +9,18 @@ from database import engine, get_db
 from models import Base, Task
 from src.planning_agent import planner_agent, executor_agent_step
 
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi import Request
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+templates = Jinja2Templates(directory="templates")
 
 class AnalyseRequest(BaseModel):
     ticker: str
@@ -66,6 +72,7 @@ def analyse(request: AnalyseRequest, db: Session = Depends(get_db)):
     db.commit()
 
     thread = threading.Thread(target=run_analysis, args=(task_id, request.ticker, request.question))
+    #request already parsed and validated by pydantic
     thread.start()
 
     return {"task_id": task_id}
@@ -83,3 +90,7 @@ def task_status(task_id: str, db: Session = Depends(get_db)):
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return {"status": task.status, "result": task.result}
+
+@app.get("/ui")
+def ui(request: Request):
+    return templates.TemplateResponse(request, "index.html")

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finance Agent</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        input, textarea { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .step { padding: 6px; margin: 4px 0; border-radius: 4px; }
+        .pending { background: #f0f0f0; }
+        .in_progress { background: #fff3cd; }
+        .done { background: #d4edda; }
+        #report { margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Finance Analytics Agent</h1>
+
+    <input id="ticker" placeholder="Ticker (e.g. AAPL)" />
+    <textarea id="question" rows="3" placeholder="Your question (e.g. Is this stock overvalued?)"></textarea>
+    <button onclick="startAnalysis()">Analyse</button>
+
+    <div id="steps"></div>
+    <div id="report"></div>
+
+    <script>
+        async function startAnalysis() {
+            const ticker = document.getElementById('ticker').value;
+            const question = document.getElementById('question').value;
+            document.getElementById('steps').innerHTML = 'Starting...';
+            document.getElementById('report').innerHTML = '';
+            
+            // fetch is browser built-in function to make HTTP requests
+            //fetch('/analyse', {...})
+            //         ↑ URL to hit    ↑ options (method, headers, body)
+            const res = await fetch('/analyse', {
+                method: 'POST',                                  //http verb
+                headers: {'Content-Type': 'application/json'},   // tell server body is json
+                body: JSON.stringify({ticker, question})         // convert js object to json string
+            });
+            const {task_id} = await res.json();
+            
+            //function is setInterval, takes 2 arguments: callback, delay_in_ms
+            //arrow function () => {}
+            const interval = setInterval(async () => {
+                const prog = await fetch(`/task_progress/${task_id}`);
+                const data = await prog.json();
+
+                document.getElementById('steps').innerHTML = data.steps.map(s =>
+                    `<div class="step ${s.status}">${s.step} — ${s.status}</div>`
+                ).join('');
+
+                if (data.status === 'done' || data.status === 'failed') {
+                    clearInterval(interval);
+                    const final = await fetch(`/task_status/${task_id}`);
+                    const result = await final.json();
+                    document.getElementById('report').innerHTML = marked.parse(result.result || 'No result.');
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

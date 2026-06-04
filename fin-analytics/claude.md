@@ -182,13 +182,36 @@ Keep: the JS polling loop (setInterval hitting /task_progress/{task_id})
 Add: render the final Markdown report (use marked.js CDN — one line addition)
 Milestone: Full end-to-end in the browser. Student types "AAPL" + "Is this stock overvalued?" and watches the steps complete live, then sees the formatted report.
 
-Phase 9: Polish + Extensions (Optional, Student-Led)
+Phase 9: Agent Behaviour Improvements (Student-Led)
 Suggest these as stretch goals — let the student pick what interests them:
+
+Prompt engineering — tighten all system prompts in agents.py:
+  Add output format constraints (e.g. "always return exactly 5 bullet risks")
+  Add domain knowledge (e.g. how to weight news sentiment vs fundamentals)
+  Add chain-of-thought instructions ("think step by step before answering")
+  Goal: more consistent, higher quality reports
+
+Reflection loop — after editor_agent, add a scorer_agent:
+  Scores the report 1-10 on completeness, accuracy, clarity
+  If score < 7, re-runs writer_agent with editor feedback as extra context
+  Max 2 reflection passes to avoid infinite loops
+  Teach: this is the "self-improvement" pattern in agentic systems
+
+Graph agent — add a chart_tool in finance_tools.py:
+  Use matplotlib or plotly to generate a price history chart
+  Encode as base64 string, embed directly in the HTML report as <img src="data:...">
+  Wire it as an extra step the planner can include
+  Teach: LLM-generated code that produces visual output
+
+Notification delivery — send the final report via messaging:
+  Option A: WhatsApp via Twilio API (requires free Twilio account)
+  Option B: Telegram bot (free, easier setup)
+  Option C: Email via SendGrid or SMTP
+  Add a POST /analyse body field: notify_to (phone/email/chat_id)
+  Teach: webhooks and third-party API integration
 
 Comparison mode: accept two tickers, run parallel analysis, write a comparison report
 Portfolio mode: accept a comma-separated list of tickers
-Chart generation: use matplotlib or plotly to generate a price chart, embed as base64 in the report
-Reflection loop: add a second editor pass that scores the report and re-runs writer if score < threshold
 Persistent history: add a /reports route that lists all completed analyses
 Teaching Style Rules
 Always start a phase by asking: "Before we write any code — what do you think this phase needs to do?"
