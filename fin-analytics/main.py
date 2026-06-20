@@ -1,18 +1,37 @@
+# ========== standard libraries ==========
 import threading
 import uuid
 from contextlib import asynccontextmanager
+
+# ========== fastapi ==========
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from database import engine, get_db
-from models import Base, Task
-from src.planning_agent import planner_agent, executor_agent_step
-
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi import Request
 
+# ========== Database ==========
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from database import engine, get_db
+from models import Base, Task
+
+# ========== own project modules ==========
+from src.planning_agent import planner_agent, executor_agent_step
+from src.dashboard import get_dashboard_data, TICKERS
+
+
+# 01: Create app, with starting and exit execution manager
+#Q: Why context manager: 
+# we need some code to be run once at startup and once at shutdown
+# this is exactly the shape of contextmanager: __enter__, __exit__
+# code before yield is code to be run at start up, after yield = code at shutdown
+# fastapi -> lifespan parameter -> expext this shape
+
+#Q: why async
+# fastapi's whole request-handling lidfecyle runs on an async event loop,
+# so the lifespan hook has to be an async def to fit into that same loop
+#replaces old @app.on_event("startup") / @app.on_event("shutdown") decorators 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -20,8 +39,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+#02: Define Web template
 templates = Jinja2Templates(directory="templates")
 
+#03: Create Pydantic Schema - defined the exact shape of the JSON body the other API expects to receive
 class AnalyseRequest(BaseModel):
     ticker: str
     question: str
@@ -30,14 +51,16 @@ def run_analysis(task_id: str, ticker: str, question: str):
     from database import SessionLocal
     db = SessionLocal()
     try:
+        #Step 1: Open a new task, register it in db, commit
         task = db.query(Task).filter(Task.id == task_id).first()
         task.status = "in_progress"
         db.commit()
-
+        #Step 2: plan steps, register steps in db
         steps = planner_agent(question, ticker)
         task.steps = [{"step": s if isinstance(s, str) else str(s), "status": "pending"} for s in steps]
         db.commit()
 
+        # Step 3: iterate to execute steps, change status to complete when finish
         history = []
         for i, step in enumerate(steps):
             task.steps[i]["status"] = "in_progress"
@@ -49,6 +72,7 @@ def run_analysis(task_id: str, ticker: str, question: str):
             task.steps[i]["status"] = "done"
             db.commit()
 
+        #Step 4: store task result history and update state, commit to db
         task.result = history[-1]
         task.status = "done"
         db.commit()
@@ -94,3 +118,7 @@ def task_status(task_id: str, db: Session = Depends(get_db)):
 @app.get("/ui")
 def ui(request: Request):
     return templates.TemplateResponse(request, "index.html")
+
+@app.get("/dashboard")
+def dashboard():
+    return get_dashboard_data(TICKERS)

@@ -21,6 +21,7 @@ def _ensure_contract(steps, ticker):
     #if it is the first step, or first step init not the above one, insert first step
     if not steps or steps[0] != first:
         steps.insert(0, first)
+    #if last step not in planned steps -> add last
     if steps[-1] != last:
         steps.append(last)
     return steps

@@ -187,7 +187,10 @@ def image_anthropic_call(model_name: str, prompt: str, media_type: str, b64: str
             "role": "user",
             "content": [
                 {"type": "text", "text": prompt},
-                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": b64}},
+                {"type": "image", 
+                "source": {"type": "base64", 
+                           "media_type": media_type, 
+                           "data": b64}},
             ],
         }],
     )

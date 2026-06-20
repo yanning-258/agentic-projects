@@ -14,6 +14,21 @@ You do NOT:
 Build everything at once
 Skip explanation to get to the code faster
 Assume the student knows something unless they've said so
+
+Refined Problem Statement (Updated 2026-06-20)
+Target user: someone who doesn't have time to actively monitor markets or read full financial reports — the student themselves, and more broadly young people who want to stay informed without the time cost. This refines/sharpens the original goal below for the portfolio-monitor direction (Phase 10+).
+
+What they actually want: a short daily report of what changed in their portfolio, plus a week-ahead "what to watch for" list — not raw data, not a long report they have to read end to end.
+
+The LLM's job in this system is filtering and surfacing — deciding what's worth the user's attention — and presenting it in low-cognitive-load formats (chart, short text, eventually mindmap) instead of dumping data on the user.
+
+Decisions from this rethink:
+- "Forecast" = calendar/event awareness for now (e.g. "earnings call Thursday," "trend declining 3 weeks") — NOT statistical/ML price prediction. Revisit statistical forecasting once the student has learned MLOps.
+- Quarterly/yearly analyst-report ingestion (deeper documents — earnings calls, analyst notes, SEC filings) — nice-to-have, deferred, not part of the current build.
+- Mindmap output — deferred "next step," not blocking current work. Technical note for when this is picked up: there's no dedicated "mindmap-generating model" — the real pattern is (1) the LLM produces a hierarchical structure (nested outline / tree), then (2) a rendering library turns that structure into the visual mindmap. Compare Mermaid.js (has a native `mindmap` diagram syntax) vs markmap (renders nested Markdown bullets as an interactive mindmap) when the student gets here.
+- Data refresh cadence: daily is the primary loop (price, news, ranking, report). Quarterly/yearly is a separate, slower, deferred loop.
+- Self-build mode (see Phase 10) applies to these deferred items too, once picked up, unless the student says otherwise.
+
 Project Goal
 Build a Finance Data Analytics Agent that:
 
@@ -213,6 +228,29 @@ Notification delivery — send the final report via messaging:
 Comparison mode: accept two tickers, run parallel analysis, write a comparison report
 Portfolio mode: accept a comma-separated list of tickers
 Persistent history: add a /reports route that lists all completed analyses
+
+Phase 10: Portfolio Monitor + Ranking Report (Self-Build Mode)
+Goal: Extend the single-ticker analyser into a portfolio monitor that surfaces what's worth the user's attention, instead of making them check every ticker manually.
+
+Agreed design:
+- Fixed ticker list for now: AAPL, TSM, TSLA, HSBC, GOOG (note: TSMC's Yahoo Finance ticker is TSM, not TSMC — yfinance won't resolve "TSMC")
+- Dashboard layer (deterministic, no LLM): price/metrics fetch (existing yfinance_tool/financials_tool) + new chart_tool (matplotlib price history -> base64 image), generated for every ticker every time
+- Ranking agent: one LLM call, given bundled dashboard data across ALL tickers, returns which ticker(s) deserve a deep dive, with reasoning — deliberately a judgment call, not a fixed rule threshold
+- Report agent: ONE combined narrative report synthesizing across whichever ticker(s) the ranking agent selected (not N separate per-ticker reports)
+- UI: default "Today's Report" landing view shows the ranking output + combined report, no clicking needed; sidebar lists all tickers for drilling into any individual ticker's own dashboard (chart + metrics) on demand
+
+MODE CHANGE for this phase (effective until the student says otherwise):
+The student wants to build this part themselves. Do NOT write or paste code for them.
+- Ask Socratic/inspirational questions that prompt the student to design the solution themselves (e.g. "What shape should the ranking_agent's output take if more than one ticker can be selected?")
+- If a library or specific library function would genuinely help, name/hint at it only (e.g. "matplotlib's savefig can write to a BytesIO buffer instead of disk") — do not write the surrounding code
+- Review and critique what the student writes rather than producing it yourself
+- Resume normal teach-with-code mode only if the student explicitly asks for code or asks to switch back
+
+UPDATE (2026-06-20):
+- The original single-ticker `/analyse` pipeline (planner → executor → data_agent → analyst_agent → writer_agent → editor_agent) is superseded by the portfolio direction. It's currently broken (data_agent assumes yfinance_tool/financials_tool return strings; they now return dicts) — leave it broken, not a priority, revisit only if the student brings it back up.
+- The dashboard layer specifically (yfinance_tool, financials_tool, news_tool, chart_tool, and bundling them across the 5 tickers + serving endpoint) is explicitly NOT in self-build mode — the student asked for direct code/explicit hints here since it's plumbing, not the agentic part they want practice with. Move fast, give code directly for this part.
+- Self-build/Socratic mode (above) resumes for the ranking agent and report agent — that's the part the student actually wants to build themselves for the learning value. Confirm with the student before assuming which mode applies if it's ambiguous.
+
 Teaching Style Rules
 Always start a phase by asking: "Before we write any code — what do you think this phase needs to do?"
 Show the original code first when mirroring a pattern, then show the adapted version side by side
