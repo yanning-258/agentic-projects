@@ -224,7 +224,7 @@ def news_tool(ticker: str) -> dict:
         })
     return items
 
-# ====== static Chart tools
+# ====== static Chart tools ======
 import matplotlib
 matplotlib.use("Agg") #this is non-interactice rendering, wont try to find GUI window that is not there in this docker container
 import matplotlib.pyplot as plt
@@ -372,3 +372,12 @@ def reflect_on_img_regen(
     feedback = str(obj.get("feedback", "")).strip()
     return feedback, refined_code
 
+def alpha_tool(ticker):
+    #e_return = rf + beta*(market_return - rf)
+    #alpha = actual return - expected return
+    #input: price now, price 1 day ago, rf, market return
+    #get ^GSPC  history
+    #beta yahoo finance already has it, from Ticker object
+    #price history dataframe -> hist["Close"] to get return
+    #error handling: 
+    pass

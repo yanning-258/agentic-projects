@@ -3,7 +3,7 @@ import json
 from openai import OpenAI
 import os
 import re
-from src.agents import data_agent, analyst_agent, writer_agent, editor_agent
+from single_ticker.agents import data_agent, analyst_agent, writer_agent, editor_agent
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 

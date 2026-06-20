@@ -17,8 +17,8 @@ from database import engine, get_db
 from models import Base, Task
 
 # ========== own project modules ==========
-from src.planning_agent import planner_agent, executor_agent_step
-from src.dashboard import get_dashboard_data, TICKERS
+from single_ticker.planning_agent import planner_agent, executor_agent_step
+from portfolio_agent.dashboard import get_dashboard_data, TICKERS
 
 
 # 01: Create app, with starting and exit execution manager
@@ -41,6 +41,7 @@ app = FastAPI(lifespan=lifespan)
 
 #02: Define Web template
 templates = Jinja2Templates(directory="templates")
+templates.env.filters["commas"] = lambda v: f"{v:,}" if isinstance(v, (int, float)) else v
 
 #03: Create Pydantic Schema - defined the exact shape of the JSON body the other API expects to receive
 class AnalyseRequest(BaseModel):
@@ -122,3 +123,11 @@ def ui(request: Request):
 @app.get("/dashboard")
 def dashboard():
     return get_dashboard_data(TICKERS)
+
+@app.get("/dashboard/view")
+def dashboard_view(request: Request):
+    data = get_dashboard_data(TICKERS)
+    for d in data:
+        if isinstance(d["News"], str):  # news_tool returns a plain string when there's no news
+            d["News"] = []
+    return templates.TemplateResponse(request, "dashboard.html", {"dashboards": data})

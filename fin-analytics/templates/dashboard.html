@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio Dashboard</title>
+    <style>
+        body { font-family: sans-serif; max-width: 1100px; margin: 40px auto; padding: 0 20px; color: #222; }
+        h1 { margin-bottom: 4px; }
+        .subtitle { color: #777; margin-top: 0; }
+        .ticker-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 28px; }
+        .ticker-card h2 { margin-top: 0; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        table td { padding: 4px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+        table td:first-child { color: #666; width: 40%; }
+        .news-item { margin-bottom: 10px; }
+        .news-item a { color: #007bff; text-decoration: none; }
+        .summary { color: #444; font-size: 0.9em; margin-top: 10px; }
+        img.chart { width: 100%; border-radius: 6px; margin: 16px 0; }
+        h3 { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <h1>Portfolio Dashboard</h1>
+    <p class="subtitle">{{ dashboards|length }} tickers — refreshed on load</p>
+
+    {% for d in dashboards %}
+    <div class="ticker-card">
+        <h2>{{ d.Ticker }} — {{ d.Snapshot["Company Name"] }}</h2>
+
+        <div class="grid">
+            <div>
+                <h3>Snapshot</h3>
+                <table>
+                    <tr><td>Current Price</td><td>{{ d.Snapshot["Current Price"] }}</td></tr>
+                    <tr><td>Open / High / Low / Close</td><td>{{ d.Snapshot.Open }} / {{ d.Snapshot.High }} / {{ d.Snapshot.Low }} / {{ d.Snapshot.Close }}</td></tr>
+                    <tr><td>Market Cap</td><td>{{ d.Snapshot["Market Cap"]|commas }}</td></tr>
+                    <tr><td>P/E Ratio</td><td>{{ d.Snapshot["P/E Ratio"] }}</td></tr>
+                    <tr><td>52w Range</td><td>{{ d.Snapshot["52w Low"] }} – {{ d.Snapshot["52w High"] }}</td></tr>
+                    <tr><td>Sector</td><td>{{ d.Snapshot.Sector }}</td></tr>
+                </table>
+            </div>
+            <div>
+                <h3>Financials</h3>
+                <table>
+                    <tr><td>Revenue</td><td>{{ d.Financials.Revenue|commas }}</td></tr>
+                    <tr><td>Net Income</td><td>{{ d.Financials["Net Income"]|commas }}</td></tr>
+                    <tr><td>EPS</td><td>{{ d.Financials.EPS }}</td></tr>
+                    <tr><td>Total Debt</td><td>{{ d.Financials["Total Debt"]|commas }}</td></tr>
+                    <tr><td>Total Equity</td><td>{{ d.Financials["Total Equity"]|commas }}</td></tr>
+                    <tr><td>Debt-to-Equity</td><td>{{ d.Financials["Debt-to-Equity"] }}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <img class="chart" src="data:image/png;base64,{{ d.Chart }}" alt="{{ d.Ticker }} 1-year price chart" />
+
+        <h3>News</h3>
+        {% if d.News %}
+            {% for item in d.News %}
+            <div class="news-item">
+                <a href="{{ item.Link }}" target="_blank">{{ item.Title }}</a>
+                <div class="summary">{{ item.Summary }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No recent news.</p>
+        {% endif %}
+
+        <p class="summary">{{ d.Snapshot.Summary }}</p>
+    </div>
+    {% endfor %}
+</body>
+</html>

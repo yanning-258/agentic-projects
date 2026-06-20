@@ -4,6 +4,8 @@ sqlalchemy #ORM layer for postgres <-> python
 psycopg2-binary #the driver SQLAlchemy uses to actually connect to Postgres
 python-dotenv #loads env variables
 openai #python client for openai LLM calls
+anthropic #python client for anthropic LLM calls
+matplotlib #chart rendering for static_chart_tool
 yfinance #
 requests
 jinja2

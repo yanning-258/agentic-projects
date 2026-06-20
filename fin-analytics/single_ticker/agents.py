@@ -1,6 +1,6 @@
 import os
 from openai import OpenAI
-from src.finance_tools import yfinance_tool, financials_tool, news_tool
+from src.tools import yfinance_tool, financials_tool, news_tool
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
